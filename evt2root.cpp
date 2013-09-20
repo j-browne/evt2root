@@ -36,7 +36,7 @@ public:
 	Int_t ch[MAX_ADC_CHAN];
 	Int_t val[MAX_ADC_CHAN];
 	adc() {Reset();};
-	void Reset(){size=0;ch.clear();val.clear();}
+	void Reset(){size=0;for(int i=0; i<MAX_ADC_CHAN; ++i){ch[i]=0;val[i]=0;}}
 };
 
 int getArgs(int argc,char **argv);
@@ -78,9 +78,9 @@ int main (int argc, char *argv[])
 	adc_t* adc = new adc_t();
 	TFile *outfile = new TFile(gParams.fileout,"RECREATE");
 	TTree *tree = new TTree("tree","Events");
-	tree->Branch("size",&adc.size,"size/I");
-	tree->Branch("chan",adc.ch,"ch[size]/I");
-	tree->Branch("val",adc.val,"val[size]/I");
+	tree->Branch("size",&(adc->size),"size/I");
+	tree->Branch("chan",adc->ch,"ch[size]/I");
+	tree->Branch("val",adc->val,"val[size]/I");
 
 	/* Loop over input files */
 	while (fgets(line,256,flist))
