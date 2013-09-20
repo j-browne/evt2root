@@ -35,7 +35,7 @@ public:
 	Int_t size;
 	Int_t ch[MAX_ADC_CHAN];
 	Int_t val[MAX_ADC_CHAN];
-	adc() {Reset();};
+	adc_t() {Reset();};
 	void Reset(){size=0;for(int i=0; i<MAX_ADC_CHAN; ++i){ch[i]=0;val[i]=0;}}
 };
 
@@ -150,10 +150,10 @@ int main (int argc, char *argv[])
 						}
 
 						/* Here we can have different packets. This is the stuff you want to change. */
+						int ind = 0;
 						switch(packetID)
 						{
 						case ADC_PACKET:
-							int index = 0;
 							while (packetRead < packetSize)
 							{
 								unsigned int data;
@@ -188,8 +188,8 @@ int main (int argc, char *argv[])
 									un = data & CAEN_DATA_UN_MASK;
 									ov = data & CAEN_DATA_OV_MASK;
 									val = data & CAEN_DATA_VAL_MASK;
-									adc->ch[index++] = chan;
-									adc->val[index++] = val;
+									adc->ch[ind++] = chan;
+									adc->val[ind++] = val;
 									//printf ("DATA: GEO: %x CHAN: %x UN: %x OV: %x VAL: %x\n", geo, chan, un, ov, val);
 									break;
 								case CAEN_EOB:
@@ -200,7 +200,7 @@ int main (int argc, char *argv[])
 							}
 
 							/* Sanity Check */
-							if (index > adc->size)
+							if (ind > adc->size)
 							{
 								printf("Warning: More channels than stated in header.\n");
 							}
@@ -227,7 +227,7 @@ int main (int argc, char *argv[])
 						exit(2);
 					}
 					tree->Fill();
-					adc01->Reset();
+					adc->Reset();
 				}
 			}
 /*
