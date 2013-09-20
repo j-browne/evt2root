@@ -10,6 +10,7 @@
 #include <TFile.h>
 
 //#define ADC_PACKET 0xadc1
+#define MAX_ADC_CHAN 32
 #define ADC_PACKET 104
 #define BUFFERSIZE 4096
 #define BUFFER_TYPE_DATA 1
@@ -28,12 +29,14 @@
 #define CAEN_DATA 0x00000000
 #define CAEN_EOB 0x04000000
 
-class adc
+class adc_t
 {
 public:
-	Int_t ch[32];
+	Int_t size;
+	Int_t ch[MAX_ADC_CHAN];
+	Int_t val[MAX_ADC_CHAN];
 	adc() {Reset();};
-	void Reset(){for (int i=0; i<32; ++i){ch[i]=0;}};
+	void Reset(){size=0;ch.clear();val.clear();}
 };
 
 int getArgs(int argc,char **argv);
@@ -72,10 +75,12 @@ int main (int argc, char *argv[])
 		exit(-2);
 	}
 
-	adc* adc01 = new adc();
+	adc_t* adc = new adc_t();
 	TFile *outfile = new TFile(gParams.fileout,"RECREATE");
 	TTree *tree = new TTree("tree","Events");
-	tree->Branch("adc01",adc01,"adc01[32]/I");
+	tree->Branch("size",&adc.size,"size/I");
+	tree->Branch("chan",adc.ch,"ch[size]/I");
+	tree->Branch("val",adc.val,"val[size]/I");
 
 	/* Loop over input files */
 	while (fgets(line,256,flist))
@@ -148,6 +153,7 @@ int main (int argc, char *argv[])
 						switch(packetID)
 						{
 						case ADC_PACKET:
+							int index = 0;
 							while (packetRead < packetSize)
 							{
 								unsigned int data;
@@ -174,6 +180,7 @@ int main (int argc, char *argv[])
 								case CAEN_HEADER:
 									crate = (data& CAEN_HEADER_CRATE_MASK)>>16;
 									cnt = (data& CAEN_HEADER_CNT_MASK)>>8;
+									adc->size = cnt;
 									//printf ("HEADER: GEO: %x CRATE: %x CNT: %x\n", geo, crate, cnt);
 									break;
 								case CAEN_DATA:
@@ -181,7 +188,8 @@ int main (int argc, char *argv[])
 									un = data & CAEN_DATA_UN_MASK;
 									ov = data & CAEN_DATA_OV_MASK;
 									val = data & CAEN_DATA_VAL_MASK;
-									adc01->ch[chan] = val;
+									adc->ch[index++] = chan;
+									adc->val[index++] = val;
 									//printf ("DATA: GEO: %x CHAN: %x UN: %x OV: %x VAL: %x\n", geo, chan, un, ov, val);
 									break;
 								case CAEN_EOB:
@@ -189,6 +197,12 @@ int main (int argc, char *argv[])
 									//printf ("EOB: GEO: %x COUNT: %x\n", geo, count);
 									break;
 								}
+							}
+
+							/* Sanity Check */
+							if (index > adc->size)
+							{
+								printf("Warning: More channels than stated in header.\n");
 							}
 							break;
 						default:
