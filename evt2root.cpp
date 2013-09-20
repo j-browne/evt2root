@@ -1,3 +1,6 @@
+/*
+ *
+ */
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
@@ -56,7 +59,8 @@ int main (int argc, char *argv[])
 	int nEvents = 0;
 
 	/* Make sure the args are good. This should never happen */
-	if (getArgs(argc,argv)!=0) {
+	if (getArgs(argc,argv)!=0)
+	{
 		fprintf(stderr,"ERROR: Invalid input!\n");
 		exit(-1);
 	}
