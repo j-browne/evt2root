@@ -181,20 +181,30 @@ int main (int argc, char *argv[])
 									crate = (data& CAEN_HEADER_CRATE_MASK)>>16;
 									cnt = (data& CAEN_HEADER_CNT_MASK)>>8;
 									adc->size = cnt;
-									//printf ("HEADER: GEO: %x CRATE: %x CNT: %x\n", geo, crate, cnt);
+//									printf ("HEADER: GEO: %d CRATE: %d CNT: %d\n", geo, crate, cnt);
 									break;
 								case CAEN_DATA:
 									chan = (data & CAEN_DATA_CHAN_MASK)>>16;
 									un = data & CAEN_DATA_UN_MASK;
 									ov = data & CAEN_DATA_OV_MASK;
 									val = data & CAEN_DATA_VAL_MASK;
-									adc->ch[ind++] = chan;
-									adc->val[ind++] = val;
-									//printf ("DATA: GEO: %x CHAN: %x UN: %x OV: %x VAL: %x\n", geo, chan, un, ov, val);
+
+									// TODO: Get rid of the thresholds
+									if (val > 300 && val < 4000)
+									{
+										adc->ch[ind] = chan;
+										adc->val[ind++] = val;
+									}
+									else
+									{
+										(adc->size)--;
+									}
+
+//									printf ("DATA: GEO: %d CHAN: %d UN: %x OV: %x VAL: %d\n", geo, chan, un, ov, val);
 									break;
 								case CAEN_EOB:
 									count = data & CAEN_EOB_COUNT_MASK;
-									//printf ("EOB: GEO: %x COUNT: %x\n", geo, count);
+//									printf ("EOB: GEO: %d COUNT: %d\n", geo, count);
 									break;
 								}
 							}
@@ -226,7 +236,12 @@ int main (int argc, char *argv[])
 						fprintf(stderr, "eventRead (%d) != eventSize (%d)\n", eventRead, eventSize);
 						exit(2);
 					}
-					tree->Fill();
+
+					// TODO
+					if (adc->size > 0)
+					{
+						tree->Fill();
+					}
 					adc->Reset();
 				}
 			}
